@@ -14,6 +14,25 @@ def gen_noise(shape):
     noise = torch.tensor(noise, dtype=torch.float32)
     return noise
 
+def create_mask(image_path):
+    if len(sys.argv) != 2:
+        print("Usage: python script.py <image_path>")
+        return
+    image_path = sys.argv[1]
+
+    image = cv2.imread(image_path)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    _, mask = cv2.threshold(blurred, 250, 255, cv2.THRESH_BINARY_INV)
+    kernel = np.ones((5, 5), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+
+    base_name = os.path.basename(image_path)
+    name, _ = os.path.splitext(base_name)
+    output_path = os.path.join('cloth_mask', f'{name}_mask.jpg')
+    os.makedirs('cloth_mask', exist_ok=True)
+    cv2.imwrite(output_path, mask)
 
 def save_images(img_tensors, img_names, save_dir):
     for img_tensor, img_name in zip(img_tensors, img_names):
